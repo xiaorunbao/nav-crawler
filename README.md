@@ -13,15 +13,14 @@
 - 同一子类内 URL 去重、跨子类保留（同一工具可归属多个垂直领域），同时统计唯一链接数
 - 状态持久化，第二次抓取标记「新增」
 - 产物可导出 CSV / MySQL / MongoDB 三类落库格式，配套本地 MySQL 容器与备份回滚脚本
-- `web/` 内含一个 Next.js 前端原型，消费导航数据结构做展示
 
 ## 环境要求
 
-| 部分           | 要求                                                                                          |
-| -------------- | --------------------------------------------------------------------------------------------- |
-| 爬虫 / 导出    | Node.js ≥ 18，依赖仅 `cheerio`                                                             |
-| 前端 `web/`  | Node.js ≥ 20.9，包管理器固定 **pnpm**（见 `web/package.json` 的 `packageManager`） |
-| 数据库（可选） | Docker + Docker Compose（MySQL 8.4，宿主机端口默认 3307）                                     |
+| 部分           | 要求                                                                  |
+| -------------- | --------------------------------------------------------------------- |
+| 爬虫 / 导出    | Node.js ≥ 18，依赖仅 `cheerio`                                       |
+| 数据库（可选） | Docker + Docker Compose（MySQL 8.4，宿主机端口默认 3307）             |
+| 运维脚本       | bash（Windows 下用 Git Bash / WSL 执行 `scripts/db.sh`）              |
 
 ## 快速开始
 
@@ -72,7 +71,7 @@ node src/cli.js --site jubt5      # 抓指定站点
 }
 ```
 
-2. 跑 `node src/cli.js --site my-nav-site`。
+1. 跑 `node src/cli.js --site my-nav-site`。
 
 ### 选择器怎么定
 
@@ -170,29 +169,46 @@ npm run export:db:all                 # CSV + MySQL + Mongo
 node src/export-db.js --site jubt5 --target mysql --db nav
 ```
 
-| 参数                  | 说明                                                        |
+| 参数 | 说明 |
 | --------------------- | ----------------------------------------------------------- |
-| `--site <名称\|all>` | 默认 `all`（扫描 `output` 下含 `links.json` 的目录）  |
-| `--out <目录>`      | 产物根目录，默认 `output`                                 |
-| `--target <目标>`   | `csv` / `mysql` / `mongo` / `all`，默认 `csv`     |
-| `--db <库名>`       | MySQL 库名，默认 `nav`（仅允许字母、数字、下划线、`$`） |
-| `--operator <标识>` | `createBy` / `updateBy` 取值，默认 `nav-crawler`      |
-| `--now <ISO时间>`   | 缺失时间字段的兜底时间，默认当前时间                        |
+| `--site <名称\|all>` | 默认 `all`（扫描 `output` 下含 `links.json` 的目录） |
+| `--out <目录>` | 产物根目录，默认 `output` |
+| `--target <目标>` | `csv` / `mysql` / `mongo` / `all`，默认 `csv` |
+| `--db <库名>` | MySQL 库名，默认 `nav`（仅允许字母、数字、下划线、`$`） |
+| `--operator <标识>` | `createBy` / `updateBy` 取值，默认 `nav-crawler` |
+| `--now <ISO时间>` | 缺失时间字段的兜底时间，默认当前时间 |
 
 产物位置：`output/<站点>/db/csv/`、`output/<站点>/db/mysql/{schema.sql,data.sql}`、`output/<站点>/db/mongo/*.ndjson`。
 
-## 前端原型（web/）
+## 本地 MySQL 容器与运维脚本
 
-独立 pnpm 工程：Next.js 16（App Router / Turbopack）+ React 19 + TypeScript + Tailwind CSS 4 + shadcn/ui + Zustand。
+`compose.yaml` 起一个 MySQL 8.4（宿主机端口默认 3307），`scripts/db.sh` 把常用运维动作封装成子命令，脚本会从容器环境里读取实际的库名与 root 密码，不依赖 `.env` 写法：
 
 ```bash
-cd web
-pnpm install --frozen-lockfile
-pnpm dev --port 3100        # http://localhost:3100
-pnpm build && pnpm start --port 3100
+./scripts/db.sh up                            # 启动容器并等待 healthy
+./scripts/db.sh status                        # 列出库内各表行数（默认动作）
+./scripts/db.sh import --site jubt5           # 生成并导入 schema.sql / data.sql
+./scripts/db.sh backup                        # 立即备份
+./scripts/db.sh restore                       # 回滚到最新一份备份
+./scripts/db.sh restore --file docker/backup/nav-pre-import-20261118-084843.sql.gz
+./scripts/db.sh reset                         # 停容器并把数据目录改名保留（不删除）
+./scripts/db.sh shell                         # 进入 mysql 交互终端
+./scripts/db.sh down                          # 停止容器（数据目录保留）
 ```
 
-页面：`/` 首页分类导航、`/secondary` 次级导航快捷面板、`/sites/[slug]` 站点详情。依赖全部为精确版本，升级时显式指定版本，勿使用 `^` / `~` 范围，也勿混用 npm / yarn。
+| 选项                | 默认值 | 说明                                        |
+| ------------------- | ------ | ------------------------------------------- |
+| `-s, --site <名称>` | `jubt5` | `import` 使用的站点名                     |
+| `-f, --file <路径>` | 最新备份 | `restore` 使用的备份文件                  |
+| `-k, --keep <N>`    | `14`    | 备份保留份数，超出部分自动清理              |
+| `-h, --help`        | —       | 显示帮助                                    |
+
+行为约定：
+
+- `import` 检测到库内已有表时，先自动打一份 `pre-import-*` 备份再导入
+- `restore` 回滚前先打一份 `pre-restore-*` 备份，回滚失败可用它救回
+- `reset` 只把 `docker/data/mysql` 改名成 `.bak-<时间戳>`，不删除，便于回退
+- 备份落在 `docker/backup/`，只保留最近 `--keep` 份（默认 14）
 
 ## 抓取礼仪与使用边界
 
