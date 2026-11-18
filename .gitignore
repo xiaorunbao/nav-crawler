@@ -1,0 +1,10 @@
+node_modules/
+output/
+docker/data/
+docker/backup/
+.env
+.env.local
+*.log
+.tmp-*
+web/.next/
+web/tsconfig.tsbuildinfo

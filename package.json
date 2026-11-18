@@ -1,0 +1,19 @@
+{
+  "name": "nav-crawler",
+  "version": "1.0.0",
+  "private": true,
+  "description": "通用垂直领域导航站爬虫：分类解析 + 内容过滤 + Markdown/JSON 落地",
+  "type": "module",
+  "scripts": {
+    "start": "node src/cli.js",
+    "list": "node src/cli.js --list",
+    "export:db": "node src/export-db.js",
+    "export:db:all": "node src/export-db.js --target all"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
