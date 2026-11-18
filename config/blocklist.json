@@ -1,0 +1,22 @@
+{
+  "_note": "过滤配置：与内置清单合并（并集）。strongKeywords 按子串匹配，wordKeywords 按英文单词边界匹配，categories 只对分类名生效，domains 按域名后缀匹配，allow 是放行白名单（域名或 URL 片段）。可选 risk 段覆盖 src/risk.js 的合规度启发式规则（piracy / nameTokens / gambling / thresholds），仅影响报告分档，不影响过滤结果",
+  "risk": {
+    "piracy": [],
+    "nameTokens": [],
+    "gambling": [],
+    "thresholds": {}
+  },
+  "categories": [
+    "棋牌娱乐示例"
+  ],
+  "strongKeywords": [
+    "约炮平台",
+    "裸播"
+  ],
+  "wordKeywords": [],
+  "domains": [],
+  "allow": [
+    "javafx.example",
+    "javascript.info"
+  ]
+}

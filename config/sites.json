@@ -1,0 +1,41 @@
+{
+  "_note": "sites.json：defaults 里的选择器/抓取参数会被各站点配置按需覆盖；不含 selectors 的站点走通用标题分层兜底解析",
+  "defaults": {
+    "fetch": {
+      "timeout": 20000,
+      "retries": 2,
+      "cookie": ""
+    },
+    "delayMs": 800,
+    "maxPages": 30,
+    "selectors": {
+      "category": ".nav-section",
+      "categoryName": "h2",
+      "subCategory": ".nav-group",
+      "subCategoryName": "h3",
+      "link": "a.nav-item",
+      "linkName": ".title",
+      "linkDesc": ".desc"
+    },
+    "deep": {
+      "enabled": true,
+      "followSelector": ".pager a",
+      "maxDepth": 1,
+      "sameHostOnly": true
+    }
+  },
+  "sites": [
+    {
+      "name": "jubt5",
+      "enabled": true,
+      "entry": "https://jubt5.one/cn/index.html",
+      "adapter": "jubt",
+      "note": "XenForo 风格导航模板：h4 大类 + xe-widget 卡片，外链在 data-original-title / myopener() 里。左侧 #main-menu 的 .html 链接为二级导航页（影视解说/磁力影视/网盘/电子书/小说/ACG/音乐/ASMR/软件游戏等），适配器会自动跟随并跨页合并同名分类。目标站主体为成人、影视推广，故仅做结构快照（分类骨架 + 数量），不落地具体链接与描述",
+      "structureOnly": true,
+      "writeRejected": false,
+      "excludeCategories": ["置顶推荐"],
+      "delayMs": 700,
+      "deep": { "enabled": false }
+    }
+  ]
+}
