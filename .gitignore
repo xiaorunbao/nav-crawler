@@ -6,5 +6,3 @@ docker/backup/
 .env.local
 *.log
 .tmp-*
-web/.next/
-web/tsconfig.tsbuildinfo
